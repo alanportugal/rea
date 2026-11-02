@@ -17,6 +17,18 @@ import { createTestTempDirectory } from "../../fixtures/temporaryDirectory.js";
 
 const execFileAsync = promisify(execFile);
 
+/** Floors are the CVE-2026-111497 patched releases of each supported line. */
+const supportedNodeVersions = ["22.23.4", "24.22.1", "26.12.1", "27.0.0"];
+const unsupportedNodeVersions = [
+  "22.23.3",
+  "24.22.0",
+  "26.12.0",
+  "22.19.0",
+  "24.11.0",
+  "23.0.0",
+  "26.0.0-rc.1",
+];
+
 describe("curl installer scenarios", { timeout: 20_000 }, () => {
   it("installs only a pinned REA CLI with closed stdin", async () => {
     const fixture = await createFixture();
@@ -30,7 +42,7 @@ describe("curl installer scenarios", { timeout: 20_000 }, () => {
     expect(await readdir(fixture.temporary)).toEqual([]);
   });
 
-  it.each(["22.19.0", "24.11.0", "26.0.0"])(
+  it.each(supportedNodeVersions)(
     "accepts supported Node %s without installing or replacing it",
     async (version) => {
       const fixture = await createFixture();
@@ -45,7 +57,7 @@ describe("curl installer scenarios", { timeout: 20_000 }, () => {
     },
   );
 
-  it.each(["22.18.9", "24.10.9", "23.0.0", "26.0.0-rc.1"])(
+  it.each(unsupportedNodeVersions)(
     "rejects unsupported Node %s before invoking npm",
     async (version) => {
       const fixture = await createFixture();
@@ -87,7 +99,7 @@ describe("curl installer scenarios", { timeout: 20_000 }, () => {
       "unsupported Node",
       ["--version", "0.3.0"],
       { FAKE_NODE_VERSION: "20.0.0" },
-      "REA installation failed: Node.js 20.0.0 is unsupported; use Node.js 22.x (>=22.19), 24.x (>=24.11), or 26+.\n",
+      "REA installation failed: Node.js 20.0.0 is unsupported; use Node.js 22.x (>=22.23.4), 24.x (>=24.22.1), or 26.12.1+.\n",
     ],
     [
       "unreadable Node version",
@@ -354,7 +366,7 @@ const createFixture = async (): Promise<InstallerFixture> => {
     executable(
       join(bin, "node"),
       `#!/bin/sh
-if [ "$1" = "-p" ]; then printf '%s\n' "\${FAKE_NODE_VERSION:-24.18.0}"; else exec ${shellQuote(process.execPath)} "$@"; fi
+if [ "$1" = "-p" ]; then printf '%s\n' "\${FAKE_NODE_VERSION:-24.22.1}"; else exec ${shellQuote(process.execPath)} "$@"; fi
 `,
     ),
     executable(
