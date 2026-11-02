@@ -1,0 +1,5 @@
+# Deterministic line endings: LF in the working tree, normalized to LF in git.
+# CRLF only where a Windows shell needs it.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
