@@ -59,15 +59,21 @@ fi
 platform="$(uname -s)"
 [[ "$platform" == "Darwin" || "$platform" == "Linux" ]] || fail "REA supports macOS and selected 64-bit Linux distributions."
 command -v curl >/dev/null 2>&1 || fail "curl is required. Install curl, then rerun this installer."
-command -v node >/dev/null 2>&1 || fail "Node.js 22.x (>=22.19), 24.x (>=24.11), or 26+ is required; install it from https://nodejs.org and retry."
+command -v node >/dev/null 2>&1 || fail "Node.js 22.x (>=22.23.4), 24.x (>=24.22.1), or 26.12.1+ is required; install it from https://nodejs.org and retry."
 command -v npm >/dev/null 2>&1 || fail "npm is required; install it with Node.js and retry."
 
 node_version="$(node -p 'process.versions.node' 2>/dev/null || true)"
 IFS=. read -r node_major node_minor _node_patch <<<"$node_version"
 [[ "$node_major" =~ ^[0-9]+$ && "$node_minor" =~ ^[0-9]+$ ]] || fail "the active Node.js version could not be read. Check that node works and is on PATH, then retry."
-if ! [[ "$_node_patch" =~ ^[0-9]+(\+[0-9A-Za-z.-]+)?$ ]] ||
-  ! ((node_major == 22 && node_minor >= 19 || node_major == 24 && node_minor >= 11 || node_major >= 26)); then
-  fail "Node.js $node_version is unsupported; use Node.js 22.x (>=22.19), 24.x (>=24.11), or 26+."
+[[ "$_node_patch" =~ ^[0-9]+(\+[0-9A-Za-z.-]+)?$ ]] ||
+  fail "Node.js $node_version is unsupported; use Node.js 22.x (>=22.23.4), 24.x (>=24.22.1), or 26.12.1+."
+node_patch="${_node_patch%%+*}"
+# Floors are the first releases of each line patched for CVE-2026-111497 (Brotli decoder).
+if ! ((node_major == 22 && (node_minor > 23 || node_minor == 23 && node_patch >= 4) ||
+  node_major == 24 && (node_minor > 22 || node_minor == 22 && node_patch >= 1) ||
+  node_major == 26 && (node_minor > 12 || node_minor == 12 && node_patch >= 1) ||
+  node_major >= 27)); then
+  fail "Node.js $node_version is unsupported; use Node.js 22.x (>=22.23.4), 24.x (>=24.22.1), or 26.12.1+."
 fi
 
 if [[ -n "$version" ]]; then
